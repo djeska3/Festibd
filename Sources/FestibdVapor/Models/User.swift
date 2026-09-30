@@ -29,8 +29,8 @@ final class User: Model, Content, @unchecked Sendable {
     var createdAt: Date
     
     @Children(for: \.$user)
-    var bookings: [Booking]
-    
+    var reservations: [Reservation]
+
     init() {}
     init(id: UUID? = nil, username: String, password: String, email: String, role: String, createdAt: Date) {
         self.id = id

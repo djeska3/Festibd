@@ -33,8 +33,8 @@ final class Workshop: Model, Content, @unchecked Sendable {
     var description: String
     
     @Children(for: \.$workshop)
-    var bookings: [Booking]
-    
+    var reservations: [Reservation]
+
     @Parent(key: "category_id")
     var category: Category
     
@@ -67,7 +67,7 @@ extension Workshop {
             capacity: maxCapacity,
             totalSubscribers: totalSubscribers,
             description: description,
-            bookings: try bookings.map { WorkshopBookingDTO(
+            reservations: try reservations.map { WorkshopReservationDTO(
                 id: try requireID(),
                 status: $0.status,
                 username: $0.$user.name

@@ -21,7 +21,7 @@ func configure(_ app: Application) async throws {
     app.migrations.add(CreateUser())
     app.migrations.add(CreateCategory())
     app.migrations.add(CreateWorkshop())
-    app.migrations.add(CreateBooking())
+    app.migrations.add(CreateReservation())
     // register routes
     try routes(app)
 }
