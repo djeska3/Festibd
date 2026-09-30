@@ -13,7 +13,7 @@ struct CreateWorkshopDTO: Content {
     var name: String
     var startTime: Date
     var endTime: Date
-    var category: String
+    var category_id: UUID
     var capacity: Int
     var totalSubscribers: Int
     var description: String
@@ -27,7 +27,7 @@ extension CreateWorkshopDTO {
         workshop.name = name
         workshop.startTime = startTime
         workshop.endTime = endTime
-        workshop.category.name = category
+        workshop.$category.id = category_id
         workshop.maxCapacity = capacity
         workshop.totalSubscribers = 0
         workshop.description = description

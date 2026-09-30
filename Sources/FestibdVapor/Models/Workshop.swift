@@ -54,7 +54,17 @@ final class Workshop: Model, Content, @unchecked Sendable {
 extension Workshop {
     
     func toDTO() throws -> WorkshopDTO {
-        return WorkshopDTO(id: try requireID(), name: name, startTime: startTime, endTime: endTime, category: category.name, capacity: maxCapacity, totalSubscribers: totalSubscribers, description: description)
+        return WorkshopDTO(
+            id: try requireID(),
+            name: name,
+            startTime: startTime,
+            endTime: endTime,
+            category_id: $category.id,
+            category_name: $category.name,
+            capacity: maxCapacity,
+            totalSubscribers: totalSubscribers,
+            description: description
+        )
     }
     
     func toManageWorkshop() throws -> ManageWorkshopDTO {
@@ -63,7 +73,8 @@ extension Workshop {
             name: name,
             startTime: startTime,
             endTime: endTime,
-            category: category.name,
+            category_id: $category.id,
+            category_name: $category.name,
             capacity: maxCapacity,
             totalSubscribers: totalSubscribers,
             description: description,

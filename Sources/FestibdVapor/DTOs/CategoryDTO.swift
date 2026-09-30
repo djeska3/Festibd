@@ -9,9 +9,17 @@ import Vapor
 
 struct CategoryDTO: Content {
     
+    var id: UUID
     var name: String
-  
-    
+}
+
+extension CategoryDTO {
+    func toModel() throws -> Category {
+        return Category(
+            id: id,
+            name: name
+        )
+    }
 }
 
 
