@@ -7,7 +7,7 @@
 import Fluent
 import Vapor
 
-struct BookingDTO: Content {
+struct ReservationDTO: Content {
     var id: UUID
     var status: String
     var workshopeName : String

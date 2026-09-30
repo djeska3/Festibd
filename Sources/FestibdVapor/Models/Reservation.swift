@@ -1,14 +1,14 @@
 //
-//  Booking.swift
+//  Reservation.swift
 //  FestibdVapor
 //
 //  Created by Apprenant 85 on 28/09/2026.
 //
 import Fluent
 import Vapor
-final class Booking: Model, Content, @unchecked Sendable {
+final class Reservation: Model, Content, @unchecked Sendable {
 
-    static let schema = "bookings"
+    static let schema = "reservations"
     
     @ID(key: .id)
     var id: UUID?
@@ -31,10 +31,10 @@ final class Booking: Model, Content, @unchecked Sendable {
    
 }
 
-extension Booking {
+extension Reservation {
     
-    func toDTO() throws -> BookingDTO {
-        return BookingDTO(id: try requireID(), status: status, workshopeName: workshop.name, workshopStartTime: workshop.startTime, workshopEndTime: workshop.endTime, workshopCategory: workshop.$category.name)
+    func toDTO() throws -> ReservationDTO {
+        return ReservationDTO(id: try requireID(), status: status, workshopeName: workshop.name, workshopStartTime: workshop.startTime, workshopEndTime: workshop.endTime, workshopCategory: workshop.$category.name)
    
     }
     

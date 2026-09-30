@@ -51,7 +51,7 @@ struct CreateWorkshop: AsyncMigration {
     }
     func revert(on database: any Database) async throws {
         try await database
-            .schema(User.schema)
+            .schema(Workshop.schema)
             .delete()
         
     }

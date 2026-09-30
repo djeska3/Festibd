@@ -1,15 +1,15 @@
 //
-//  CreateBooking.swift
+//  CreateReservation.swift
 //  FestibdVapor
 //
 //  Created by Apprenant 85 on 28/09/2026.
 //
 import Fluent
-struct CreateBooking: AsyncMigration {
+struct CreateReservation: AsyncMigration {
     
     func prepare(on database: any Database) async throws {
         try await database
-            .schema(Booking.schema)
+            .schema(Reservation.schema)
             .id()
             .field(
                  "status",
@@ -32,7 +32,7 @@ struct CreateBooking: AsyncMigration {
     }
     func revert(on database: any Database) async throws {
         try await database
-            .schema(User.schema)
+            .schema(Reservation.schema)
             .delete()
         
     }
