@@ -59,8 +59,8 @@ extension Workshop {
             name: name,
             startTime: startTime,
             endTime: endTime,
-            category_id: $category.id,
-            category_name: $category.name,
+            category_id: category.id!,
+            category_name: category.name,
             capacity: maxCapacity,
             totalSubscribers: totalSubscribers,
             description: description

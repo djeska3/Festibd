@@ -16,6 +16,7 @@ struct WorkshopController: RouteCollection {
         workshops.get(":id", use: show)
         workshops.put(":id", use: update)
         workshops.delete(":id", use: delete)
+        workshops.get("search", use: search)
     }
     
     func index(req: Request) async throws -> [Workshop] {
@@ -109,11 +110,12 @@ struct WorkshopController: RouteCollection {
     
     func search(req: Request) async throws -> [WorkshopDTO] {
         guard let date: Date = req.query["date"] else {
-            throw Abort(.badRequest)
+            throw Abort(.badRequest, reason: "Expect date parameter")
         }
-        
+
         let workshops = try await Workshop
             .query(on: req.db)
+            .with(\.$category)
             .filter(\.$startTime == date)
             .all()
         
