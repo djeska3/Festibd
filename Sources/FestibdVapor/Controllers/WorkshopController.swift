@@ -23,9 +23,8 @@ struct WorkshopController: RouteCollection {
     }
     
     func create(req: Request) async throws -> WorkshopDTO {
-        let workshop = try req.content.decode(
-            Workshop.self
-        )
+        let dto = try req.content.decode(CreateWorkshopDTO.self)
+        let workshop = dto.toModel()
         guard !workshop.name.isEmpty else {
             throw Abort(.badRequest, reason: "Name is required.")
         }
@@ -67,7 +66,8 @@ struct WorkshopController: RouteCollection {
             throw Abort(.notFound)
         }
         
-        let newWorkshop = try req.content.decode(Workshop.self)
+        let dto = try req.content.decode(WorkshopDTO.self)
+        let newWorkshop = dto.toModel()
         guard !newWorkshop.name.isEmpty else {
             throw Abort(.badRequest, reason: "Name is required.")
         }

@@ -17,7 +17,7 @@ struct ManageWorkshopDTO: Content {
     var capacity: Int
     var totalSubscribers: Int
     var description: String
-    var bookings: [WorkshopBookingDTO]
+    var reservations: [WorkshopReservationDTO]
   
 }
 

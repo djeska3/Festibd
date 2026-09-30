@@ -16,11 +16,9 @@ struct ReservationController: RouteCollection {
         reservations.delete(":id", use: delete)
     }
     
-    
     func create(req: Request) async throws -> ReservationDTO {
-        let reservation = try req.content.decode(
-            Reservation.self
-        )
+        let dto = try req.content.decode(CreateReservationDTO.self)
+        let reservation = dto.toModel()
         let maxCapacity = reservation.workshop.maxCapacity
         let totalSubscribers = reservation.workshop.totalSubscribers
         if totalSubscribers < maxCapacity {
@@ -55,7 +53,8 @@ struct ReservationController: RouteCollection {
             throw Abort(.notFound)
         }
         
-        let newReservation = try req.content.decode(Reservation.self)
+        let dto = try req.content.decode(ReservationDTO.self)
+        let newReservation = dto.toModel()
         guard newReservation.status == "validated" else {
             throw Abort(.badRequest, reason: "Bad status.")
         }
