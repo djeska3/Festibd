@@ -9,11 +9,11 @@ import Vapor
 
 struct WorkshopDTO: Content {
 
-    var id: UUID
+    var id: UUID?
     var name: String
     var startTime: Date
     var endTime: Date
-    var category_id: UUID
+    var category_id: UUID?
     var category_name: String
     var capacity: Int
     var totalSubscribers: Int
@@ -28,7 +28,7 @@ extension WorkshopDTO {
         workshop.name = name
         workshop.startTime = startTime
         workshop.endTime = endTime
-        workshop.$category.id = category_id
+        workshop.category.id = category_id
         workshop.maxCapacity = capacity
         workshop.totalSubscribers = totalSubscribers
         workshop.description = description
