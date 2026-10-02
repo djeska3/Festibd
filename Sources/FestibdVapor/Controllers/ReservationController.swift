@@ -8,7 +8,7 @@ import Fluent
 import Vapor
 
 struct ReservationController: RouteCollection {
-    
+
     func boot(routes: any RoutesBuilder) throws {
         let reservations = routes.grouped("reservations")
         let protectedRoutes = reservations.grouped(JWTMiddleware())
@@ -17,7 +17,7 @@ struct ReservationController: RouteCollection {
         protectedRoutes.delete(":id", use: delete)
         protectedRoutes.put(":id", use: update)
     }
-    
+
     func create(req: Request) async throws -> CreateReservationResponseDTO {
         let payload = try req.auth.require(UserPayload.self)
         guard let _ = try await User.find(payload.id, on: req.db) else {
@@ -26,6 +26,13 @@ struct ReservationController: RouteCollection {
         let newReservationDTO = try req.content.decode(CreateReservationDTO.self)
         guard let workshop = try await Workshop.find(newReservationDTO.workshopID, on: req.db) else {
             throw Abort(.badRequest, reason: ("Workshop id doesn't exist"))
+        }
+        guard try await Reservation.query(on: req.db)
+            .filter(\.$user.$id == payload.id)
+            .filter(\.$workshop.$id == newReservationDTO.workshopID)
+            .filter(\.$status != "cancelled")
+            .count() == 0 else {
+            throw Abort(.badRequest, reason: "The user already have a reservation")
         }
         let reservation = newReservationDTO.toModel()
         reservation.$user.id = payload.id
