@@ -15,6 +15,7 @@ struct ReservationController: RouteCollection {
         protectedRoutes.post(use: create)
         protectedRoutes.get(":id", use: show)
         protectedRoutes.delete(":id", use: delete)
+        protectedRoutes.put(":id", use: update)
     }
     
     func create(req: Request) async throws -> CreateReservationResponseDTO {
@@ -35,29 +36,39 @@ struct ReservationController: RouteCollection {
         try await workshop.update(on: req.db)
         return reservation.toCreateReservationResponseDTO()
     }
-    
+
     func show(req: Request) async throws -> ReservationDTO {
         guard let id = req.parameters.get("id", as: UUID.self)
-        else {
+                else {
             throw Abort(.badRequest, reason: "This ID isn't correct.")
         }
-        guard let reservation = try await Reservation.find(id, on: req.db)
-        else {
+        guard let reservation = try await Reservation.query(on: req.db)
+            .with(\.$workshop, { workshop in
+                workshop.with(\.$category)
+            })
+                .filter(\.$id == id)
+                .first()
+                else {
             throw Abort(.notFound, reason: "This reservation doesn't exist.")
         }
         return try reservation.toDTO()
     }
-    
+
     func update(req: Request) async throws -> ReservationDTO {
         guard let id = req.parameters.get("id", as: UUID.self)
-        else {
+                else {
             throw Abort(.badRequest)
         }
-        guard let reservation = try await Reservation.find(id, on: req.db)
-        else {
+        guard let reservation = try await Reservation.query(on: req.db)
+            .with(\.$workshop, { workshop in
+                workshop.with(\.$category)
+            })
+                .filter(\.$id == id)
+                .first()
+                else {
             throw Abort(.notFound)
         }
-        guard let workshop = try await Workshop.find(reservation.workshop.id, on: req.db) else {
+        guard let workshop = try await Workshop.find(reservation.$workshop.id, on: req.db) else {
             throw Abort(.badRequest, reason: ("Workshop id doesn't exist"))
         }
         let dto = try req.content.decode(UpdateReservationDTO.self)
@@ -73,15 +84,20 @@ struct ReservationController: RouteCollection {
         }
         return try reservation.toDTO()
     }
-    
+
     func delete(req: Request) async throws -> CreateReservationResponseDTO {
         guard let id = req.parameters.get("id", as: UUID.self)
-        else {
+                else {
             throw Abort(.badRequest, reason: "ID expected")
         }
-        guard let reservation = try await Reservation.find(id, on: req.db)
-        else {
-            throw Abort(.notFound, reason: "Reservation not found")
+        guard let reservation = try await Reservation.query(on: req.db)
+            .with(\.$workshop, { workshop in
+                workshop.with(\.$category)
+            })
+                .filter(\.$id == id)
+                .first()
+                else {
+            throw Abort(.notFound)
         }
         guard let workshop = try await Workshop.find(reservation.$workshop.id, on: req.db) else {
             throw Abort(.notFound, reason: "Workshop not found")
