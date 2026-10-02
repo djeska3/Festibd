@@ -19,11 +19,16 @@ struct ReservationController: RouteCollection {
     }
     
     func create(req: Request) async throws -> CreateReservationResponseDTO {
+        let payload = try req.auth.require(UserPayload.self)
+        guard let _ = try await User.find(payload.id, on: req.db) else {
+            throw Abort(.notFound, reason: "User doesn't exist")
+        }
         let newReservationDTO = try req.content.decode(CreateReservationDTO.self)
         guard let workshop = try await Workshop.find(newReservationDTO.workshopID, on: req.db) else {
             throw Abort(.badRequest, reason: ("Workshop id doesn't exist"))
         }
         let reservation = newReservationDTO.toModel()
+        reservation.$user.id = payload.id
         let maxCapacity = workshop.maxCapacity
         let totalSubscribers = workshop.totalSubscribers
         if totalSubscribers < maxCapacity {
