@@ -21,7 +21,16 @@ func configure(_ app: Application) async throws {
     app.migrations.add(CreateUser())
     app.migrations.add(CreateCategory())
     app.migrations.add(CreateWorkshop())
-    app.migrations.add(CreateBooking())
+    app.migrations.add(CreateReservation())
+
+    // configure URL decoder to use ISO 8601 format
+    let decoderConfiguration = URLEncodedFormDecoder(
+        configuration: .init(dateDecodingStrategy: .iso8601)
+    )
+    ContentConfiguration.global.use(urlDecoder: decoderConfiguration)
+
     // register routes
     try routes(app)
+
+
 }

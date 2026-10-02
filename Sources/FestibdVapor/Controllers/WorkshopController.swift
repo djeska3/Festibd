@@ -8,7 +8,7 @@ import Fluent
 import Vapor
 
 struct WorkshopController: RouteCollection {
-    
+
     func boot(routes: any RoutesBuilder) throws {
         let workshops = routes.grouped("workshops")
         workshops.get(use: index)
@@ -16,13 +16,17 @@ struct WorkshopController: RouteCollection {
         workshops.get(":id", use: show)
         workshops.put(":id", use: update)
         workshops.delete(":id", use: delete)
+        workshops.get("search", use: search)
     }
-    
-    func index(req: Request) async throws -> [Workshop] {
-        return try await Workshop.query(on: req.db).all()
+
+    func index(req: Request) async throws -> [WorkshopDTO] {
+        let workshops = try await Workshop.query(on: req.db)
+            .with(\.$category)
+            .all()
+        return workshops.map { $0.toDTO() }
     }
-    
-    func create(req: Request) async throws -> WorkshopDTO {
+
+    func create(req: Request) async throws -> CreateWorkshopResponseDTO {
         let dto = try req.content.decode(CreateWorkshopDTO.self)
         let workshop = dto.toModel()
         guard !workshop.name.isEmpty else {
@@ -41,82 +45,87 @@ struct WorkshopController: RouteCollection {
             throw Abort(.badRequest , reason: "Description is required.")
         }
         try await workshop.create(on: req.db)
-        return try workshop.toDTO()
+        return workshop.toCreateWorkshopResponseDTO()
     }
-    
+
     func show(req: Request) async throws -> WorkshopDTO {
         guard let id = req.parameters.get("id", as: UUID.self)
-        else {
+                else {
             throw Abort(.badRequest, reason: "This ID isn't correct.")
         }
-        guard let workshop = try await Workshop.find(id, on: req.db)
-        else {
+        guard let workshop = try await Workshop.query(on: req.db)
+            .with(\.$category)
+            .filter(\.$id == id)
+            .first()
+                else {
             throw Abort(.notFound, reason: "This workshop doesn't exist.")
         }
-        return try workshop.toDTO()
+        return workshop.toDTO()
     }
-    
-    func update(req: Request) async throws -> WorkshopDTO {
+
+    func update(req: Request) async throws -> CreateWorkshopResponseDTO {
         guard let id = req.parameters.get("id", as: UUID.self)
-        else {
+                else {
             throw Abort(.badRequest)
         }
         guard let workshop = try await Workshop.find(id, on: req.db)
-        else {
+                else {
             throw Abort(.notFound)
         }
-        
-        let dto = try req.content.decode(WorkshopDTO.self)
-        let newWorkshop = dto.toModel()
-        guard !newWorkshop.name.isEmpty else {
+
+        let workshopUpdateDTO = try req.content.decode(CreateWorkshopResponseDTO.self)
+        guard !workshopUpdateDTO.name.isEmpty else {
             throw Abort(.badRequest, reason: "Name is required.")
         }
-        guard newWorkshop.startTime.compare(newWorkshop.endTime) == .orderedAscending else {
+        guard workshopUpdateDTO.startTime
+            .compare(workshopUpdateDTO.endTime) == .orderedAscending else {
             throw Abort(.badRequest, reason: "Your endTime must be after startTime.")
         }
-        guard newWorkshop.maxCapacity > 0 else {
+        guard workshopUpdateDTO.maxCapacity > 0 else {
             throw Abort(.badRequest, reason : "Max capacity need to be greater than 0.")
         }
-        guard newWorkshop.totalSubscribers >= 0 && newWorkshop.totalSubscribers <= newWorkshop.maxCapacity else {
+        guard workshopUpdateDTO.totalSubscribers >= 0 && workshopUpdateDTO.totalSubscribers <= workshopUpdateDTO.maxCapacity else {
             throw Abort(.badRequest , reason: "Total subscribers need to be greater or equal to 0, and lower or equal to Max capacity.")
         }
-        guard !newWorkshop.description.isEmpty else {
+        guard !workshopUpdateDTO.description.isEmpty else {
             throw Abort(.badRequest , reason: "Description is required.")
         }
-        
-        workshop.name = newWorkshop.name
-        workshop.startTime = newWorkshop.startTime
-        workshop.endTime = newWorkshop.endTime
+
+        workshop.name = workshopUpdateDTO.name
+        workshop.startTime = workshopUpdateDTO.startTime
+        workshop.endTime = workshopUpdateDTO.endTime
         workshop.maxCapacity = workshop.maxCapacity
-        workshop.totalSubscribers = newWorkshop.totalSubscribers
-        workshop.description = newWorkshop.description
+        workshop.totalSubscribers = workshopUpdateDTO.totalSubscribers
+        workshop.description = workshopUpdateDTO.description
         try await workshop.update(on: req.db)
-        return try workshop.toDTO()
+        return workshop.toCreateWorkshopResponseDTO()
     }
-    
+
     func delete(req: Request) async throws -> HTTPStatus {
         guard let id = req.parameters.get("id", as: UUID.self)
-        else {
+                else {
             throw Abort(.badRequest)
         }
         guard let workshop = try await Workshop.find(id, on: req.db)
-        else {
+                else {
             throw Abort(.notFound)
         }
         try await workshop.delete(on: req.db)
         return .noContent
     }
-    
+
     func search(req: Request) async throws -> [WorkshopDTO] {
         guard let date: Date = req.query["date"] else {
-            throw Abort(.badRequest)
+            throw Abort(.badRequest, reason: "Expect date parameter")
         }
-        
+
         let workshops = try await Workshop
             .query(on: req.db)
-            .filter(\.$startTime == date)
+            .with(\.$category)
+            .filter(\.$startTime >= date)
+            .filter(\.$startTime <= date.addingTimeInterval(3600 * 24))
             .all()
-        
-        return try workshops.map{try $0.toDTO()}
+
+        return workshops.map{$0.toDTO()}
     }
 }

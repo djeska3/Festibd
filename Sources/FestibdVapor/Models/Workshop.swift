@@ -33,8 +33,8 @@ final class Workshop: Model, Content, @unchecked Sendable {
     var description: String
     
     @Children(for: \.$workshop)
-    var bookings: [Booking]
-    
+    var reservations: [Reservation]
+
     @Parent(key: "category_id")
     var category: Category
     
@@ -53,8 +53,18 @@ final class Workshop: Model, Content, @unchecked Sendable {
 
 extension Workshop {
     
-    func toDTO() throws -> WorkshopDTO {
-        return WorkshopDTO(id: try requireID(), name: name, startTime: startTime, endTime: endTime, category: category.name, capacity: maxCapacity, totalSubscribers: totalSubscribers, description: description)
+    func toDTO() -> WorkshopDTO {
+        return WorkshopDTO(
+            id: id,
+            name: name,
+            startTime: startTime,
+            endTime: endTime,
+            category_id: $category.id,
+            category_name: category.name,
+            capacity: maxCapacity,
+            totalSubscribers: totalSubscribers,
+            description: description
+        )
     }
     
     func toManageWorkshop() throws -> ManageWorkshopDTO {
@@ -63,15 +73,29 @@ extension Workshop {
             name: name,
             startTime: startTime,
             endTime: endTime,
-            category: category.name,
+            category_id: $category.id,
+            category_name: $category.name,
             capacity: maxCapacity,
             totalSubscribers: totalSubscribers,
             description: description,
-            bookings: try bookings.map { WorkshopBookingDTO(
+            reservations: try reservations.map { WorkshopReservationDTO(
                 id: try requireID(),
                 status: $0.status,
                 username: $0.$user.name
             )}
+        )
+    }
+
+    func toCreateWorkshopResponseDTO() -> CreateWorkshopResponseDTO {
+        return CreateWorkshopResponseDTO(
+            id: id,
+            name: name,
+            startTime: startTime,
+            endTime: endTime,
+            category_id: $category.id,
+            maxCapacity: maxCapacity,
+            totalSubscribers: totalSubscribers,
+            description: description
         )
     }
 }

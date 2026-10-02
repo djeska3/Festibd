@@ -1,35 +1,35 @@
 //
-//  WorkshopDTO.swift
+//  CreateWorkshopDTO.swift
 //  FestibdVapor
 //
-//  Created by Apprenant 85 on 28/09/2026.
+//  Created by ShoSho on 30/09/2026.
 //
+
 import Fluent
 import Vapor
 
-struct WorkshopDTO: Content {
+struct CreateWorkshopDTO: Content {
     
-    var id: UUID
     var name: String
     var startTime: Date
     var endTime: Date
-    var category: String
+    var category_id: UUID
     var capacity: Int
     var totalSubscribers: Int
     var description: String
+    
 }
 
-extension WorkshopDTO {
+extension CreateWorkshopDTO {
     
     func toModel() -> Workshop {
         let workshop = Workshop()
-        workshop.id = id
         workshop.name = name
         workshop.startTime = startTime
         workshop.endTime = endTime
-        workshop.category.name = category
+        workshop.$category.id = category_id
         workshop.maxCapacity = capacity
-        workshop.totalSubscribers = totalSubscribers
+        workshop.totalSubscribers = 0
         workshop.description = description
         
       return workshop
