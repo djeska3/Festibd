@@ -17,19 +17,23 @@ struct ReservationController: RouteCollection {
         protectedRoutes.delete(":id", use: delete)
     }
     
-    func create(req: Request) async throws -> ReservationDTO {
-        let dto = try req.content.decode(CreateReservationDTO.self)
-        let reservation = dto.toModel()
-        let maxCapacity = reservation.workshop.maxCapacity
-        let totalSubscribers = reservation.workshop.totalSubscribers
+    func create(req: Request) async throws -> CreateReservationResponseDTO {
+        let newReservationDTO = try req.content.decode(CreateReservationDTO.self)
+        guard let workshop = try await Workshop.find(newReservationDTO.workshopID, on: req.db) else {
+            throw Abort(.badRequest, reason: ("Workshop id doesn't exist"))
+        }
+        let reservation = newReservationDTO.toModel()
+        let maxCapacity = workshop.maxCapacity
+        let totalSubscribers = workshop.totalSubscribers
         if totalSubscribers < maxCapacity {
             reservation.status = "validated"
-            reservation.workshop.totalSubscribers += 1
+            workshop.totalSubscribers += 1
         } else {
             reservation.status = "pending"
         }
         try await reservation.create(on: req.db)
-        return try reservation.toDTO()
+        try await workshop.update(on: req.db)
+        return reservation.toCreateReservationResponseDTO()
     }
     
     func show(req: Request) async throws -> ReservationDTO {
@@ -53,34 +57,39 @@ struct ReservationController: RouteCollection {
         else {
             throw Abort(.notFound)
         }
-        
-        let dto = try req.content.decode(ReservationDTO.self)
-        let newReservation = dto.toModel()
-        guard newReservation.status == "validated" else {
+        guard let workshop = try await Workshop.find(reservation.workshop.id, on: req.db) else {
+            throw Abort(.badRequest, reason: ("Workshop id doesn't exist"))
+        }
+        let dto = try req.content.decode(UpdateReservationDTO.self)
+
+        guard dto.status == "validated" else {
             throw Abort(.badRequest, reason: "Bad status.")
         }
-        let maxCapacity = reservation.workshop.maxCapacity
-        let totalSubscribers = reservation.workshop.totalSubscribers
-        if totalSubscribers < maxCapacity {
+        if workshop.totalSubscribers < workshop.maxCapacity {
             reservation.status = "validated"
-            reservation.workshop.totalSubscribers += 1
+            workshop.totalSubscribers += 1
             try await reservation.update(on: req.db)
+            try await workshop.update(on: req.db)
         }
         return try reservation.toDTO()
     }
     
-    func delete(req: Request) async throws -> ReservationDTO {
+    func delete(req: Request) async throws -> CreateReservationResponseDTO {
         guard let id = req.parameters.get("id", as: UUID.self)
         else {
-            throw Abort(.badRequest)
+            throw Abort(.badRequest, reason: "ID expected")
         }
         guard let reservation = try await Reservation.find(id, on: req.db)
         else {
-            throw Abort(.notFound)
+            throw Abort(.notFound, reason: "Reservation not found")
+        }
+        guard let workshop = try await Workshop.find(reservation.$workshop.id, on: req.db) else {
+            throw Abort(.notFound, reason: "Workshop not found")
         }
         reservation.status = "cancelled"
-        reservation.workshop.totalSubscribers -= 1
+        workshop.totalSubscribers -= 1
         try await reservation.update(on: req.db)
-        return try reservation.toDTO()
+        try await workshop.update(on: req.db)
+        return reservation.toCreateReservationResponseDTO()
     }
 }
