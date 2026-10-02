@@ -23,6 +23,7 @@ extension CreateUserDTO {
         user.password = password
         user.email = email
         user.role = "festivalGoer"
+        user.createdAt = Date()
       return user
     }
 }

@@ -11,9 +11,10 @@ struct ReservationController: RouteCollection {
     
     func boot(routes: any RoutesBuilder) throws {
         let reservations = routes.grouped("reservations")
-        reservations.post(use: create)
-        reservations.get(":id", use: show)
-        reservations.delete(":id", use: delete)
+        let protectedRoutes = reservations.grouped(JWTMiddleware())
+        protectedRoutes.post(use: create)
+        protectedRoutes.get(":id", use: show)
+        protectedRoutes.delete(":id", use: delete)
     }
     
     func create(req: Request) async throws -> ReservationDTO {

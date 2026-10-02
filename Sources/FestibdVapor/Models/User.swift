@@ -41,3 +41,18 @@ final class User: Model, Content, @unchecked Sendable {
         self.createdAt = createdAt
     }
 }
+
+extension User {
+    
+    func toDTO() throws -> UserDTO {
+        return UserDTO(
+            id: id,
+            username: username,
+            role: role,
+            email: email
+        )
+   
+    }
+    
+    
+}

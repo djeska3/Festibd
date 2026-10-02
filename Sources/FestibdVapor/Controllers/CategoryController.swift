@@ -11,7 +11,8 @@ struct CategoryController: RouteCollection {
     
     func boot(routes: any RoutesBuilder) throws {
         let categories = routes.grouped("categories")
-        categories.get(use: index)
+        let protectedRoutes = categories.grouped(JWTMiddleware())
+        protectedRoutes.get(use: index)
         
     }
     
