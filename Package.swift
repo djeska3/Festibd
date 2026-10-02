@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "FestibdVapor",
     platforms: [
-       .macOS(.v13)
+        .macOS(.v13)
     ],
     dependencies: [
         // 💧 A server-side Swift web framework.
@@ -16,7 +16,9 @@ let package = Package(
         // 🔵 Non-blocking, event-driven networking for Swift. Used for custom executors
         .package(url: "https://github.com/apple/swift-nio.git", from: "2.101.0"),
         // JWT
-        .package(url: "https://github.com/vapor/jwt.git", from: "4.0.0")
+        .package(url: "https://github.com/vapor/jwt.git", from: "4.0.0"),
+        // Gatekeeper
+        .package(url: "https://github.com/nodes-vapor/gatekeeper.git", from: "4.0.0")
     ],
     targets: [
         .executableTarget(
@@ -27,7 +29,8 @@ let package = Package(
                 .product(name: "Vapor", package: "vapor"),
                 .product(name: "NIOCore", package: "swift-nio"),
                 .product(name: "NIOPosix", package: "swift-nio"),
-                .product(name: "JWT", package: "jwt")
+                .product(name: "JWT", package: "jwt"),
+                .product(name: "Gatekeeper", package: "gatekeeper")
             ],
             swiftSettings: swiftSettings
         ),

@@ -2,6 +2,7 @@ import NIOSSL
 import Fluent
 import FluentMySQLDriver
 import Vapor
+import Gatekeeper
 
 /// configures your application
 func configure(_ app: Application) async throws {
@@ -28,9 +29,23 @@ func configure(_ app: Application) async throws {
         configuration: .init(dateDecodingStrategy: .iso8601)
     )
     ContentConfiguration.global.use(urlDecoder: decoderConfiguration)
+    
+    // configure CORS
+    let corsConfiguration = CORSMiddleware.Configuration(
+        allowedOrigin: .all,
+        allowedMethods: [.GET, .POST, .PUT, .DELETE, .OPTIONS],
+        allowedHeaders: [.accept, .authorization, .contentType, .origin],
+        cacheExpiration: 800,
+    )
+    
+    let corsMiddleware = CORSMiddleware(configuration: corsConfiguration)
+    app.middleware.use(corsMiddleware)
+    
+    app.caches.use(.memory)
+    app.gatekeeper.config = .init(maxRequests: 100, per: .minute)
+    app.middleware.use(GatekeeperMiddleware())
 
     // register routes
     try routes(app)
-
 
 }
