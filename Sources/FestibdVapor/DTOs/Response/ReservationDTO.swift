@@ -8,7 +8,7 @@ import Fluent
 import Vapor
 
 struct ReservationDTO: Content {
-    var id: UUID
+    var id: UUID?
     var status: String
     var workshopName : String
     var workshopStartTime: Date
