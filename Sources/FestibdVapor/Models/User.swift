@@ -25,9 +25,10 @@ final class User: Model, Content, @unchecked Sendable {
     @Field(key: "role")
     var role: String
  
-    @Field(key: "created_at")
-    var createdAt: Date
-    
+//    @Field(key: "created_at")
+    @Timestamp(key: "created_at", on: .create)
+    var createdAt: Date?
+
     @Children(for: \.$user)
     var reservations: [Reservation]
 
