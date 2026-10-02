@@ -33,7 +33,7 @@ struct CreateUser: AsyncMigration {
             )
             .field(
                  "created_at",
-                 .date,
+                 .datetime,
                  .required
             )
             .create()

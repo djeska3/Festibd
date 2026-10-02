@@ -6,17 +6,20 @@
 //
 import Fluent
 import Vapor
+import JWT
 
 struct WorkshopController: RouteCollection {
 
     func boot(routes: any RoutesBuilder) throws {
         let workshops = routes.grouped("workshops")
-        workshops.get(use: index)
-        workshops.post(use: create)
-        workshops.get(":id", use: show)
-        workshops.put(":id", use: update)
-        workshops.delete(":id", use: delete)
-        workshops.get("search", use: search)
+        
+        let protectedRoutes = workshops.grouped(JWTMiddleware())
+        protectedRoutes.get(use: index)
+        protectedRoutes.post(use: create)
+        protectedRoutes.get(":id", use: show)
+        protectedRoutes.put(":id", use: update)
+        protectedRoutes.delete(":id", use: delete)
+        protectedRoutes.get("search", use: search)
     }
 
     func index(req: Request) async throws -> [WorkshopDTO] {

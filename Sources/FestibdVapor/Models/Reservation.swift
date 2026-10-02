@@ -34,7 +34,13 @@ final class Reservation: Model, Content, @unchecked Sendable {
 extension Reservation {
     
     func toDTO() throws -> ReservationDTO {
-        return ReservationDTO(id: try requireID(), status: status, workshopeName: workshop.name, workshopStartTime: workshop.startTime, workshopEndTime: workshop.endTime, workshopCategory: workshop.$category.name)
+        return ReservationDTO(
+            id: try requireID(),
+            status: status,
+            workshopName: workshop.name,
+            workshopStartTime: workshop.startTime,
+            workshopEndTime: workshop.endTime,
+            workshopCategory: workshop.$category.name)
    
     }
     
