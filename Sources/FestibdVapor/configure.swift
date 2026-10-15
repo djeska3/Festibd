@@ -29,7 +29,11 @@ func configure(_ app: Application) async throws {
         configuration: .init(dateDecodingStrategy: .iso8601)
     )
     ContentConfiguration.global.use(urlDecoder: decoderConfiguration)
-    
+
+    guard let _ = Environment.get("JWT_KEY") else {
+        throw Abort(.internalServerError)
+    }
+
     // configure CORS
     let corsConfiguration = CORSMiddleware.Configuration(
         allowedOrigin: .all,

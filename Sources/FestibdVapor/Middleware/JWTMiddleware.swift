@@ -14,8 +14,10 @@ final class JWTMiddleware: Middleware {
         guard let token = request.headers.bearerAuthorization?.token else {
             return request.eventLoop.future(error: Abort(.unauthorized, reason: "Missing token."))
         }
-        
-        let signer = JWTSigner.hs256(key: "my_secret_key") //
+        guard let jwtKey = Environment.get("JWT_KEY") else {
+            return request.eventLoop.future(error: Abort(.internalServerError, reason: "JWT key not found"))
+        }
+        let signer = JWTSigner.hs256(key: jwtKey) //
         let payload: UserPayload
         
         do {
