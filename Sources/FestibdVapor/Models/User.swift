@@ -23,7 +23,7 @@ final class User: Model, Content, @unchecked Sendable {
     var email: String
 
     @Field(key: "role")
-    var role: String
+    var role: Role
  
 //    @Field(key: "created_at")
     @Timestamp(key: "created_at", on: .create)
@@ -33,7 +33,7 @@ final class User: Model, Content, @unchecked Sendable {
     var reservations: [Reservation]
 
     init() {}
-    init(id: UUID? = nil, username: String, password: String, email: String, role: String, createdAt: Date) {
+    init(id: UUID? = nil, username: String, password: String, email: String, role: Role, createdAt: Date) {
         self.id = id
         self.username = username
         self.password = password
@@ -43,17 +43,22 @@ final class User: Model, Content, @unchecked Sendable {
     }
 }
 
-extension User {
+extension User: Authenticatable {
     
     func toDTO() throws -> UserDTO {
         return UserDTO(
             id: id,
             username: username,
-            role: role,
+            role: role.rawValue,
             email: email
         )
    
     }
     
     
+}
+
+enum Role: String, CaseIterable, Decodable, Encodable {
+    case festivalGoer
+    case admin 
 }

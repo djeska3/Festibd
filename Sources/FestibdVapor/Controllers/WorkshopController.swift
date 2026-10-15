@@ -15,11 +15,13 @@ struct WorkshopController: RouteCollection {
         
         let protectedRoutes = workshops.grouped(JWTMiddleware())
         protectedRoutes.get(use: index)
-        protectedRoutes.post(use: create)
         protectedRoutes.get(":id", use: show)
-        protectedRoutes.put(":id", use: update)
-        protectedRoutes.delete(":id", use: delete)
         protectedRoutes.get("search", use: search)
+        
+        let adminRoutes = workshops.grouped(RoleMiddleware())
+        adminRoutes.post(use: create)
+        adminRoutes.put(":id", use: update)
+        adminRoutes.delete(":id", use: delete)
     }
 
     func index(req: Request) async throws -> [WorkshopDTO] {
