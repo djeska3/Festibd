@@ -41,8 +41,11 @@ struct UserController: RouteCollection {
         else {
             throw Abort(.notFound, reason: "Password not correct.")
         }
+        guard let jwtKey = Environment.get("JWT_KEY") else {
+            throw Abort(.internalServerError, reason: "JWT key not found")
+        }
         let payload = UserPayload(id: userDB.id!)
-        let signer = JWTSigner.hs256(key: "my_secret_key")
+        let signer = JWTSigner.hs256(key: jwtKey)
         let jwToken = try signer.sign(payload)
         
         return AuthDTO(token: jwToken)
