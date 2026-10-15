@@ -15,7 +15,9 @@ struct ReservationController: RouteCollection {
         protectedRoutes.post(use: create)
         protectedRoutes.get(":id", use: show)
         protectedRoutes.delete(":id", use: delete)
-        protectedRoutes.put(":id", use: update)
+        
+        let adminRoutes = reservations.grouped(RoleMiddleware())
+        adminRoutes.put(":id", use: update)
     }
 
     func create(req: Request) async throws -> CreateReservationResponseDTO {
