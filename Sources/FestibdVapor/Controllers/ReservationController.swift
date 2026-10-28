@@ -16,7 +16,7 @@ struct ReservationController: RouteCollection {
         protectedRoutes.get(":id", use: show)
         protectedRoutes.delete(":id", use: delete)
         
-        let adminRoutes = reservations.grouped(RoleMiddleware())
+        let adminRoutes = protectedRoutes.grouped(RoleMiddleware())
         adminRoutes.put(":id", use: update)
     }
 
