@@ -18,7 +18,7 @@ struct WorkshopController: RouteCollection {
         protectedRoutes.get(":id", use: show)
         protectedRoutes.get("search", use: search)
         
-        let adminRoutes = workshops.grouped(RoleMiddleware())
+        let adminRoutes = protectedRoutes.grouped(RoleMiddleware())
         adminRoutes.post(use: create)
         adminRoutes.put(":id", use: update)
         adminRoutes.delete(":id", use: delete)
