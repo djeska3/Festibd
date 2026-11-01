@@ -12,12 +12,29 @@ struct ReservationController: RouteCollection {
     func boot(routes: any RoutesBuilder) throws {
         let reservations = routes.grouped("reservations")
         let protectedRoutes = reservations.grouped(JWTMiddleware())
+        protectedRoutes.get(use: index)
         protectedRoutes.post(use: create)
         protectedRoutes.get(":id", use: show)
         protectedRoutes.delete(":id", use: delete)
-        
+
         let adminRoutes = protectedRoutes.grouped(RoleMiddleware())
         adminRoutes.put(":id", use: update)
+    }
+
+    func index(req: Request) async throws -> [ReservationDTO] {
+        guard let payload = req.auth.get(UserPayload.self) else {
+            throw Abort(.unauthorized)
+        }
+        let reservations = try await Reservation
+            .query(on: req.db)
+            .with(\.$user)
+            .with(\.$workshop, { workshop in
+                workshop.with(\.$category)
+            })
+                .filter(\.$user.$id == payload.id)
+                .filter(\.$status != "cancelled")
+                .all()
+        return reservations.map { $0.toDTO() }
     }
 
     func create(req: Request) async throws -> CreateReservationResponseDTO {
@@ -65,7 +82,7 @@ struct ReservationController: RouteCollection {
                 else {
             throw Abort(.notFound, reason: "This reservation doesn't exist.")
         }
-        return try reservation.toDTO()
+        return reservation.toDTO()
     }
 
     func update(req: Request) async throws -> ReservationDTO {
@@ -96,7 +113,7 @@ struct ReservationController: RouteCollection {
             try await reservation.update(on: req.db)
             try await workshop.update(on: req.db)
         }
-        return try reservation.toDTO()
+        return reservation.toDTO()
     }
 
     func delete(req: Request) async throws -> CreateReservationResponseDTO {
