@@ -67,9 +67,9 @@ extension Workshop {
         )
     }
     
-    func toManageWorkshop() throws -> ManageWorkshopDTO {
+    func toManageWorkshopDTO(reservations: [Reservation]) -> ManageWorkshopDTO {
         return ManageWorkshopDTO(
-            id: try requireID(),
+            id: id,
             name: name,
             startTime: startTime,
             endTime: endTime,
@@ -78,10 +78,10 @@ extension Workshop {
             capacity: maxCapacity,
             totalSubscribers: totalSubscribers,
             description: description,
-            reservations: try reservations.map { WorkshopReservationDTO(
-                id: try requireID(),
+            reservations: reservations.map { WorkshopReservationDTO(
+                id: $0.id,
                 status: $0.status,
-                username: $0.$user.name
+                username: $0.user.username
             )}
         )
     }

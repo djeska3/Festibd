@@ -12,16 +12,17 @@ struct WorkshopController: RouteCollection {
 
     func boot(routes: any RoutesBuilder) throws {
         let workshops = routes.grouped("workshops")
-        
+
         let protectedRoutes = workshops.grouped(JWTMiddleware())
         protectedRoutes.get(use: index)
         protectedRoutes.get(":id", use: show)
         protectedRoutes.get("search", use: search)
-        
+
         let adminRoutes = protectedRoutes.grouped(RoleMiddleware())
         adminRoutes.post(use: create)
         adminRoutes.put(":id", use: update)
         adminRoutes.delete(":id", use: delete)
+        adminRoutes.get("manage", ":id", use: manage)
     }
 
     func index(req: Request) async throws -> [WorkshopDTO] {
@@ -77,8 +78,7 @@ struct WorkshopController: RouteCollection {
                 else {
             throw Abort(.notFound)
         }
-
-        let workshopUpdateDTO = try req.content.decode(CreateWorkshopResponseDTO.self)
+        let workshopUpdateDTO = try req.content.decode(UpdateWorkshopRequestDTO.self)
         guard !workshopUpdateDTO.name.isEmpty else {
             throw Abort(.badRequest, reason: "Name is required.")
         }
@@ -86,21 +86,16 @@ struct WorkshopController: RouteCollection {
             .compare(workshopUpdateDTO.endTime) == .orderedAscending else {
             throw Abort(.badRequest, reason: "Your endTime must be after startTime.")
         }
-        guard workshopUpdateDTO.maxCapacity > 0 else {
+        guard workshopUpdateDTO.capacity > 0 else {
             throw Abort(.badRequest, reason : "Max capacity need to be greater than 0.")
-        }
-        guard workshopUpdateDTO.totalSubscribers >= 0 && workshopUpdateDTO.totalSubscribers <= workshopUpdateDTO.maxCapacity else {
-            throw Abort(.badRequest , reason: "Total subscribers need to be greater or equal to 0, and lower or equal to Max capacity.")
         }
         guard !workshopUpdateDTO.description.isEmpty else {
             throw Abort(.badRequest , reason: "Description is required.")
         }
-
         workshop.name = workshopUpdateDTO.name
         workshop.startTime = workshopUpdateDTO.startTime
         workshop.endTime = workshopUpdateDTO.endTime
         workshop.maxCapacity = workshop.maxCapacity
-        workshop.totalSubscribers = workshopUpdateDTO.totalSubscribers
         workshop.description = workshopUpdateDTO.description
         try await workshop.update(on: req.db)
         return workshop.toCreateWorkshopResponseDTO()
@@ -132,5 +127,28 @@ struct WorkshopController: RouteCollection {
             .all()
 
         return workshops.map{$0.toDTO()}
+    }
+
+    func manage(req: Request) async throws -> ManageWorkshopDTO {
+        guard let id = req.parameters.get("id", as: UUID.self)
+                else {
+            throw Abort(.badRequest, reason: "This ID isn't correct.")
+        }
+        guard let workshop = try await Workshop
+            .query(on: req.db)
+            .with(\.$category)
+            .filter(\.$id == id)
+            .first() else {
+            throw Abort(.notFound, reason: "This workshop doesn't exist")
+        }
+
+        let activeReservations = try await workshop.$reservations
+            .query(on: req.db)
+            .with(\.$user)
+            .filter(\.$status != "cancelled")
+            .all()
+
+
+        return workshop.toManageWorkshopDTO(reservations: activeReservations)
     }
 }

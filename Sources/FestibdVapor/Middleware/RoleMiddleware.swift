@@ -16,7 +16,7 @@ struct RoleMiddleware: AsyncMiddleware {
         
         guard let user = try await User.find(payload.id, on: request.db)
                 else {
-            throw Abort(.unauthorized)
+            throw Abort(.notFound, reason: "User not found")
         }
         
         guard user.role == .admin else {
