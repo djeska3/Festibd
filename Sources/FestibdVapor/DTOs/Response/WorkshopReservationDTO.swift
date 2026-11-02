@@ -10,7 +10,7 @@ import Vapor
 
 struct WorkshopReservationDTO: Content {
     
-    var id: UUID
+    var id: UUID?
     var status: String
     var username: String
 }

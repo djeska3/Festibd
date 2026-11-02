@@ -9,7 +9,7 @@ import Vapor
 
 struct ManageWorkshopDTO: Content {
     
-    var id: UUID
+    var id: UUID?
     var name: String
     var startTime: Date
     var endTime: Date

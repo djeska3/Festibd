@@ -8,6 +8,7 @@ import Fluent
 import Vapor
 final class Reservation: Model, Content, @unchecked Sendable {
 
+
     static let schema = "reservations"
 
     @ID(key: .id)
@@ -33,14 +34,15 @@ final class Reservation: Model, Content, @unchecked Sendable {
 
 extension Reservation {
 
-    func toDTO() throws -> ReservationDTO {
+    func toDTO() -> ReservationDTO {
         return ReservationDTO(
-            id: try requireID(),
+            id: id,
             status: status,
+            workshopID: $workshop.id,
             workshopName: workshop.name,
             workshopStartTime: workshop.startTime,
             workshopEndTime: workshop.endTime,
-            workshopCategory: workshop.$category.name)
+            workshopCategory: workshop.category.name)
     }
 
     func toCreateReservationResponseDTO() -> CreateReservationResponseDTO {
