@@ -128,7 +128,7 @@ struct ReservationController: RouteCollection {
                 .filter(\.$id == id)
                 .first()
                 else {
-            throw Abort(.notFound)
+            throw Abort(.notFound, reason: "Reservation not found")
         }
         guard let workshop = try await Workshop.find(reservation.$workshop.id, on: req.db) else {
             throw Abort(.notFound, reason: "Workshop not found")
