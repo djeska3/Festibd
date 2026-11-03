@@ -93,6 +93,7 @@ struct WorkshopController: RouteCollection {
             throw Abort(.badRequest , reason: "Description is required.")
         }
         workshop.name = workshopUpdateDTO.name
+        workshop.$category.id = workshopUpdateDTO.category_id
         workshop.startTime = workshopUpdateDTO.startTime
         workshop.endTime = workshopUpdateDTO.endTime
         workshop.maxCapacity = workshop.maxCapacity
