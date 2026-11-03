@@ -17,6 +17,7 @@ struct WorkshopController: RouteCollection {
         protectedRoutes.get(use: index)
         protectedRoutes.get(":id", use: show)
         protectedRoutes.get("search", use: search)
+        protectedRoutes.get("has_reserved", ":id", use: hasUserReserved)
 
         let adminRoutes = protectedRoutes.grouped(RoleMiddleware())
         adminRoutes.post(use: create)
@@ -151,5 +152,35 @@ struct WorkshopController: RouteCollection {
 
 
         return workshop.toManageWorkshopDTO(reservations: activeReservations)
+    }
+
+    func hasUserReserved(req: Request) async throws -> HasUserReservedDTO {
+
+        guard let payload = req.auth.get(UserPayload.self) else {
+            throw Abort(.unauthorized)
+        }
+
+        guard let workshopID = req.parameters.get("id", as: UUID.self) else {
+            throw Abort(.notFound, reason: "Missing workshop ID")
+        }
+
+        guard let workshop = try await Workshop
+            .query(on: req.db)
+            .with(\.$reservations)
+            .filter(\.$id == workshopID)
+            .first() else {
+            throw Abort(.notFound, reason: "Workshop not found")
+        }
+
+
+        guard let reservation = try await workshop.$reservations
+            .query(on: req.db)
+            .with(\.$user)
+            .filter(\.$user.$id == payload.id)
+            .filter(\.$status != "cancelled")
+            .first() else {
+            return HasUserReservedDTO(hasReserved: false)
+        }
+        return HasUserReservedDTO(hasReserved: true, reservationID: reservation.id)
     }
 }
