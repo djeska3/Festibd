@@ -17,7 +17,7 @@ struct CategoryController: RouteCollection {
     }
     
     func index(req: Request) async throws -> [CategoryDTO] {
-        let categories = try await Category
+        let categories = try await CategoryModel
             .query(on: req.db)
             .all()
         
