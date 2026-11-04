@@ -9,13 +9,13 @@ import Vapor
 
 struct CategoryDTO: Content {
     
-    var id: UUID
+    var id: UUID?
     var name: String
 }
 
 extension CategoryDTO {
-    func toModel() throws -> Category {
-        return Category(
+    func toModel() throws -> CategoryModel {
+        return CategoryModel(
             id: id,
             name: name
         )

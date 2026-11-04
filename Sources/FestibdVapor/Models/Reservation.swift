@@ -39,7 +39,7 @@ extension Reservation {
             id: id,
             status: status,
             workshopID: $workshop.id,
-            workshopName: workshop.name,
+            workshopName: $workshop.name,
             workshopStartTime: workshop.startTime,
             workshopEndTime: workshop.endTime,
             workshopCategory: workshop.category.name)

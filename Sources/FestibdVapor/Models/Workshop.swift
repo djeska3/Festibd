@@ -36,7 +36,7 @@ final class Workshop: Model, Content, @unchecked Sendable {
     var reservations: [Reservation]
 
     @Parent(key: "category_id")
-    var category: Category
+    var category: CategoryModel
     
     init() {}
     init(id: UUID? = nil, name: String, startTime: Date, endTime: Date, maxCapacity: Int, totalSubscribers: Int, description: String) {
