@@ -3,20 +3,23 @@ import Fluent
 import FluentMySQLDriver
 import Vapor
 import Gatekeeper
+import FluentSQLiteDriver
 
 /// configures your application
 func configure(_ app: Application) async throws {
     // uncomment to serve files from /Public folder
     // app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
-
-    app.databases.use(DatabaseConfigurationFactory.mysql(
-        hostname: Environment.get("DATABASE_HOST") ?? "localhost",
-        port: Environment.get("DATABASE_PORT").flatMap(Int.init(_:)) ?? MySQLConfiguration.ianaPortNumber,
-        username: Environment.get("DATABASE_USERNAME") ?? "root",
-        password: Environment.get("DATABASE_PASSWORD") ?? "",
-        database: Environment.get("DATABASE_NAME") ?? "Festibd_db"
-    ), as: .mysql)
-
+    if app.environment == .testing {
+        app.databases.use(.sqlite(.memory), as: .sqlite)
+    } else {
+        app.databases.use(DatabaseConfigurationFactory.mysql(
+            hostname: Environment.get("DATABASE_HOST") ?? "localhost",
+            port: Environment.get("DATABASE_PORT").flatMap(Int.init(_:)) ?? MySQLConfiguration.ianaPortNumber,
+            username: Environment.get("DATABASE_USERNAME") ?? "root",
+            password: Environment.get("DATABASE_PASSWORD") ?? "",
+            database: Environment.get("DATABASE_NAME") ?? "Festibd_db"
+        ), as: .mysql)
+    }
     app.http.server.configuration.port = 8081
     
     app.migrations.add(CreateUser())
@@ -30,8 +33,10 @@ func configure(_ app: Application) async throws {
     )
     ContentConfiguration.global.use(urlDecoder: decoderConfiguration)
 
-    guard let _ = Environment.get("JWT_KEY") else {
-        throw Abort(.internalServerError)
+    if app.environment != .testing {
+        guard let _ = Environment.get("JWT_KEY") else {
+            throw Abort(.internalServerError, reason: "JWT key not found")
+        }
     }
 
     // configure CORS
@@ -46,9 +51,10 @@ func configure(_ app: Application) async throws {
     app.middleware.use(corsMiddleware)
     
     app.caches.use(.memory)
-    app.gatekeeper.config = .init(maxRequests: 100, per: .minute)
-    app.middleware.use(GatekeeperMiddleware())
-
+    if app.environment != .testing {
+        app.gatekeeper.config = .init(maxRequests: 100, per: .minute)
+        app.middleware.use(GatekeeperMiddleware())
+    }
     // register routes
     try routes(app)
 
