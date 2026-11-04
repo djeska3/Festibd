@@ -7,7 +7,7 @@
 
 import Fluent
 import Vapor
-final class Category: Model, Content, @unchecked Sendable {
+final class CategoryModel: Model, Content, @unchecked Sendable {
 
     static let schema = "categories"
     
@@ -28,7 +28,7 @@ final class Category: Model, Content, @unchecked Sendable {
     }
 }
 
-extension Category {
+extension CategoryModel {
     
     func toDTO() throws -> CategoryDTO{
         return CategoryDTO(id: try requireID(), name: name)
