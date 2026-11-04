@@ -21,6 +21,15 @@ struct UserController: RouteCollection {
     @Sendable
     func create(req: Request) async throws -> UserDTO {
         var newUser = try req.content.decode(CreateUserDTO.self)
+        let passwordRegex = try Regex(
+            "(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}")
+        guard newUser.password.contains(passwordRegex) else {
+            throw Abort(.badRequest, reason: "Wrong password")
+        }
+        let emailRegex = try Regex("[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}")
+        guard newUser.email.contains(emailRegex) else {
+            throw Abort(.badRequest, reason: "Wrong email")
+        }
         newUser.password = try Bcrypt.hash(newUser.password)
         let userToSave = newUser.toModel()
         try await userToSave.save(on: req.db)
@@ -39,7 +48,7 @@ struct UserController: RouteCollection {
         }
         guard try Bcrypt.verify(userRequest.password, created: userDB.password)
         else {
-            throw Abort(.notFound, reason: "Password not correct.")
+            throw Abort(.unauthorized, reason: "Password not correct.")
         }
         guard let jwtKey = Environment.get("JWT_KEY") else {
             throw Abort(.internalServerError, reason: "JWT key not found")
