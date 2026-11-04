@@ -9,18 +9,19 @@
 import Fluent
 import Vapor
 
-struct UpdateWorkshopRequestDTO: Content {
+struct UpdateWorkshopDTO: Content {
 
     var name: String
     var startTime: Date
     var endTime: Date
     var category_id: UUID
     var capacity: Int
+    var totalSubscribers: Int
     var description: String
-
+    
 }
 
-extension UpdateWorkshopRequestDTO {
+extension UpdateWorkshopDTO {
 
     func toModel() -> Workshop {
         let workshop = Workshop()
@@ -29,9 +30,9 @@ extension UpdateWorkshopRequestDTO {
         workshop.endTime = endTime
         workshop.$category.id = category_id
         workshop.maxCapacity = capacity
-        workshop.totalSubscribers = 0
+        workshop.totalSubscribers = totalSubscribers
         workshop.description = description
-
+        
       return workshop
     }
 }

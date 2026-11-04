@@ -39,14 +39,14 @@ struct WorkshopController: RouteCollection {
         guard !workshop.name.isEmpty else {
             throw Abort(.badRequest, reason: "Name is required.")
         }
+        guard let _ = try await CategoryModel.find(dto.category_id, on: req.db) else {
+            throw Abort(.badRequest, reason: "Bad category ID")
+        }
         guard workshop.startTime.compare(workshop.endTime) == .orderedAscending else {
             throw Abort(.badRequest, reason: "Your endTime must be after startTime.")
         }
         guard workshop.maxCapacity > 0 else {
             throw Abort(.badRequest, reason : "Max capacity need to be greater than 0.")
-        }
-        guard workshop.totalSubscribers >= 0 && workshop.totalSubscribers <= workshop.maxCapacity else {
-            throw Abort(.badRequest , reason: "Total subscribers need to be greater or equal to 0, and lower or equal to Max capacity.")
         }
         guard !workshop.description.isEmpty else {
             throw Abort(.badRequest , reason: "Description is required.")
@@ -73,15 +73,19 @@ struct WorkshopController: RouteCollection {
     func update(req: Request) async throws -> CreateWorkshopResponseDTO {
         guard let id = req.parameters.get("id", as: UUID.self)
                 else {
-            throw Abort(.badRequest)
+            throw Abort(.notFound, reason: "Workshop not found")
         }
         guard let workshop = try await Workshop.find(id, on: req.db)
                 else {
             throw Abort(.notFound)
         }
-        let workshopUpdateDTO = try req.content.decode(UpdateWorkshopRequestDTO.self)
+
+        let workshopUpdateDTO = try req.content.decode(UpdateWorkshopDTO.self)
         guard !workshopUpdateDTO.name.isEmpty else {
             throw Abort(.badRequest, reason: "Name is required.")
+        }
+        guard let _ = try await CategoryModel.find(workshopUpdateDTO.category_id, on: req.db) else {
+            throw Abort(.badRequest, reason: "Bad category ID")
         }
         guard workshopUpdateDTO.startTime
             .compare(workshopUpdateDTO.endTime) == .orderedAscending else {
@@ -89,6 +93,9 @@ struct WorkshopController: RouteCollection {
         }
         guard workshopUpdateDTO.capacity > 0 else {
             throw Abort(.badRequest, reason : "Max capacity need to be greater than 0.")
+        }
+        guard workshopUpdateDTO.totalSubscribers >= 0 && workshopUpdateDTO.totalSubscribers <= workshopUpdateDTO.capacity else {
+            throw Abort(.badRequest , reason: "Total subscribers need to be greater or equal to 0, and lower or equal to Max capacity.")
         }
         guard !workshopUpdateDTO.description.isEmpty else {
             throw Abort(.badRequest , reason: "Description is required.")
@@ -161,7 +168,7 @@ struct WorkshopController: RouteCollection {
         }
 
         guard let workshopID = req.parameters.get("id", as: UUID.self) else {
-            throw Abort(.notFound, reason: "Missing workshop ID")
+            throw Abort(.badRequest, reason: "Missing workshop ID")
         }
 
         guard let workshop = try await Workshop
