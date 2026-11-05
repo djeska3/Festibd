@@ -10,14 +10,15 @@ import Vapor
 import JWT
 
 struct UserController: RouteCollection {
-    
+
     func boot(routes: any RoutesBuilder) throws {
         let users = routes.grouped("users")
-        
+
         users.post(use: create)
         users.post("login", use: login)
+        users.post("staff", "login", use: loginStaff)
     }
-    
+
     @Sendable
     func create(req: Request) async throws -> UserDTO {
         var newUser = try req.content.decode(CreateUserDTO.self)
@@ -35,19 +36,19 @@ struct UserController: RouteCollection {
         try await userToSave.save(on: req.db)
         return try userToSave.toDTO()
     }
-    
+
     @Sendable
     func login(req: Request) async throws -> AuthDTO {
         let userRequest = try req.content.decode(LoginDTO.self)
-        
+
         guard let userDB = try await User.query(on: req.db)
             .filter(\.$email == userRequest.email)
             .first()
-        else {
+                else {
             throw Abort(.notFound, reason: "User doesn't exist.")
         }
         guard try Bcrypt.verify(userRequest.password, created: userDB.password)
-        else {
+                else {
             throw Abort(.unauthorized, reason: "Password not correct.")
         }
         guard let jwtKey = Environment.get("JWT_KEY") else {
@@ -56,7 +57,34 @@ struct UserController: RouteCollection {
         let payload = UserPayload(id: userDB.id!)
         let signer = JWTSigner.hs256(key: jwtKey)
         let jwToken = try signer.sign(payload)
-        
+
+        return AuthDTO(token: jwToken)
+    }
+
+    @Sendable
+    func loginStaff(req: Request) async throws -> AuthDTO {
+        let userRequest = try req.content.decode(LoginDTO.self)
+
+        guard let userDB = try await User.query(on: req.db)
+            .filter(\.$email == userRequest.email)
+            .first()
+                else {
+            throw Abort(.notFound, reason: "User doesn't exist.")
+        }
+        guard userDB.role == .admin else {
+            throw Abort(.forbidden, reason: "You must be staff to log this way")
+        }
+        guard try Bcrypt.verify(userRequest.password, created: userDB.password)
+                else {
+            throw Abort(.unauthorized, reason: "Password not correct.")
+        }
+        guard let jwtKey = Environment.get("JWT_KEY") else {
+            throw Abort(.internalServerError, reason: "JWT key not found")
+        }
+        let payload = UserPayload(id: userDB.id!)
+        let signer = JWTSigner.hs256(key: jwtKey)
+        let jwToken = try signer.sign(payload)
+
         return AuthDTO(token: jwToken)
     }
 }

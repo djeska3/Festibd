@@ -140,5 +140,77 @@ struct UserControllerTests {
         }
     }
 
+    @Test("POST /users/staff/login")
+    func loginStaff() async throws {
+        try await withApp { app in
+            try await createStaffTest(app)
+            let loginDTO = LoginDTO(email: "admin@festibd.com", password: "AdminAdmin")
+            try await app.testing().test(
+                .POST,
+                "users/staff/login",
+                beforeRequest: { req in
+                    try req.content.encode(loginDTO, as: .json)
+                },
+                afterResponse: { res async throws in
+                    #expect(res.status == .ok)
+                    let response = try res.content.decode(AuthDTO.self)
+                    #expect (!response.token.isEmpty)
+                }
+            )
+        }
+    }
+
+    @Test("POST /users/staff/login wrong password")
+    func loginStaffWrongPassword() async throws {
+        try await withApp { app in
+            try await createStaffTest(app)
+            let loginDTO = LoginDTO(email: "admin@festibd.com", password: "badPassword")
+            try await app.testing().test(
+                .POST,
+                "users/staff/login",
+                beforeRequest: { req in
+                    try req.content.encode(loginDTO, as: .json)
+                },
+                afterResponse: { res async throws in
+                    #expect(res.status == .unauthorized)
+                }
+            )
+        }
+    }
+
+    @Test("POST /users/staff/login not in DB")
+    func loginStaffNotInDB() async throws {
+        try await withApp() { app in
+            let loginDTO = LoginDTO(email: "admin@festibd.com", password: "AdminAdmin")
+            try await app.testing().test(
+                .POST,
+                "users/staff/login",
+                beforeRequest: { req in
+                    try req.content.encode(loginDTO, as: .json)
+                },
+                afterResponse: { res async throws in
+                    #expect(res.status == .notFound)
+                }
+            )
+        }
+    }
+
+    @Test("POST /users/staff/login not staff")
+    func loginStaffNotStaff() async throws {
+        try await withApp() { app in
+            try await createUserTest(app)
+            let loginDTO = LoginDTO(email: "email@email.com", password: "Password123!")
+            try await app.testing().test(
+                .POST,
+                "users/staff/login",
+                beforeRequest: { req in
+                    try req.content.encode(loginDTO, as: .json)
+                },
+                afterResponse: { res async throws in
+                    #expect(res.status == .forbidden)
+                }
+            )
+        }
+    }
 }
 
